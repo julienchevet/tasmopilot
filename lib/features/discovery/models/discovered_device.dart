@@ -1,12 +1,28 @@
 class DiscoveredDevice {
   final String ipAddress;
   final String hostname;
-  final String? macAddress; // Sometimes available via mDNS TXT records
+  final String? macAddress;
+  
+  // Enriched fields
+  final String? module;
+  final String? version;
+  final String? topic;
+  final List<String>? friendlyNames;
+  final int? rssi;
+  final String? uptime;
+  final String? powerState;
 
   DiscoveredDevice({
     required this.ipAddress,
     required this.hostname,
     this.macAddress,
+    this.module,
+    this.version,
+    this.topic,
+    this.friendlyNames,
+    this.rssi,
+    this.uptime,
+    this.powerState,
   });
 
   @override

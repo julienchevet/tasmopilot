@@ -33,7 +33,12 @@
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_http._tcp</string>
-		<string>_hap._tcp</string>
+		<string>_tasmota._tcp</string>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>http</string>
+		<string>https</string>
 	</array>
 </dict>
 </plist>

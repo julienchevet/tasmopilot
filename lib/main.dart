@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
 import 'router/app_router.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:tasmopilot/l10n/generated/app_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +28,16 @@ class TasmopilotApp extends ConsumerWidget {
       themeMode: ThemeMode.system, // Uses system dark/light mode preference
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+      ],
     );
   }
 }

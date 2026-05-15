@@ -19,17 +19,13 @@ class SitesNotifier extends AsyncNotifier<List<Site>> {
     return repository.getSites();
   }
 
-  Future<void> addSite(String name) async {
+  Future<void> addSite(Site site) async {
     // Set state to loading while we add
     state = const AsyncValue.loading();
     
     // Add to DB
     final repository = ref.read(siteRepositoryProvider);
-    final newSite = Site(
-      name: name,
-      createdAt: DateTime.now(),
-    );
-    await repository.createSite(newSite);
+    await repository.createSite(site);
     
     // Refresh the list
     state = await AsyncValue.guard(_fetchSites);

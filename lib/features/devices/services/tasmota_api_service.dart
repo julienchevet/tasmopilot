@@ -13,27 +13,31 @@ class TasmotaApiService {
     }
   }
 
-  Future<bool> togglePower(String ipAddress) async {
-    final uri = Uri.parse('http://$ipAddress/cm?cmnd=Power%20TOGGLE');
+  Future<bool> togglePower(String ipAddress, {int? relayIndex}) async {
+    final cmd = relayIndex != null ? 'Power$relayIndex%20TOGGLE' : 'Power%20TOGGLE';
+    final uri = Uri.parse('http://$ipAddress/cm?cmnd=$cmd');
     final response = await http.get(uri).timeout(const Duration(seconds: 4));
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      // Tasmota can return "POWER" or "POWER1"
-      final powerState = data['POWER'] ?? data['POWER1'];
+      // Tasmota can return "POWER", "POWER1", "POWER2", etc.
+      final key = relayIndex != null ? 'POWER$relayIndex' : 'POWER';
+      final powerState = data[key] ?? data['POWER'] ?? data['POWER1'];
       return powerState == 'ON';
     } else {
       throw Exception('Failed to toggle power');
     }
   }
 
-  Future<bool> getPower(String ipAddress) async {
-    final uri = Uri.parse('http://$ipAddress/cm?cmnd=Power');
+  Future<bool> getPower(String ipAddress, {int? relayIndex}) async {
+    final cmd = relayIndex != null ? 'Power$relayIndex' : 'Power';
+    final uri = Uri.parse('http://$ipAddress/cm?cmnd=$cmd');
     final response = await http.get(uri).timeout(const Duration(seconds: 4));
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final powerState = data['POWER'] ?? data['POWER1'];
+      final key = relayIndex != null ? 'POWER$relayIndex' : 'POWER';
+      final powerState = data[key] ?? data['POWER'] ?? data['POWER1'];
       return powerState == 'ON';
     } else {
       throw Exception('Failed to get power status');

@@ -5,8 +5,19 @@ final subnetScannerProvider = Provider<SubnetScannerService>((ref) {
   return SubnetScannerService();
 });
 
-// AutoDispose FutureProvider to trigger a scan when someone watches it
-final discoveryProvider = FutureProvider.autoDispose<List<DiscoveredDevice>>((ref) async {
+// AutoDispose StreamProvider to trigger a scan and receive devices in real-time
+final discoveryProvider = StreamProvider.autoDispose<List<DiscoveredDevice>>((ref) async* {
   final subnetService = ref.read(subnetScannerProvider);
-  return await subnetService.scanSubnet();
+  final List<DiscoveredDevice> discovered = [];
+  
+  // Initially yield an empty list
+  yield discovered;
+  
+  await for (final device in subnetService.scanSubnet()) {
+    if (!discovered.contains(device)) {
+      discovered.add(device);
+      // Yield a new copy of the list to trigger UI update
+      yield List.from(discovered);
+    }
+  }
 });
