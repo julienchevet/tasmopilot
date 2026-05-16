@@ -24,13 +24,13 @@ class DevicesScreen extends ConsumerWidget {
   Color _getMqttColor(TasmotaMqttStatus state, bool isDark) {
     switch (state) {
       case TasmotaMqttStatus.connected:
-        return isDark ? const Color(0xFF00E676) : Colors.white;
+        return isDark ? const Color(0xFF00E676) : const Color(0xFF16A34A);
       case TasmotaMqttStatus.connecting:
-        return Colors.orangeAccent;
+        return isDark ? Colors.orangeAccent : const Color(0xFFD97706);
       case TasmotaMqttStatus.error:
-        return Colors.redAccent;
+        return isDark ? Colors.redAccent : const Color(0xFFDC2626);
       case TasmotaMqttStatus.disconnected:
-        return isDark ? Colors.grey : Colors.white54;
+        return isDark ? Colors.grey : const Color(0xFF64748B);
     }
   }
 
@@ -41,23 +41,39 @@ class DevicesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMqttBadge(TasmotaMqttStatus status, bool isDark) {
+  Widget _buildMqttBadge(
+    BuildContext context,
+    TasmotaMqttStatus status,
+    bool isDark,
+  ) {
     final color = _getMqttColor(status, isDark);
     final isConnected = status == TasmotaMqttStatus.connected;
+    final isConnecting = status == TasmotaMqttStatus.connecting;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: isConnected ? color.withOpacity(0.2) : null,
-        border: Border.all(color: color, width: 1.5),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        'MQTT',
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+    final label = switch (status) {
+      TasmotaMqttStatus.connected => 'MQTT ●',
+      TasmotaMqttStatus.connecting => 'MQTT ◌',
+      TasmotaMqttStatus.error => 'MQTT ✕',
+      TasmotaMqttStatus.disconnected => 'MQTT ○',
+    };
+
+    return GestureDetector(
+      onTap: () => _showMqttDiscoveryDialog(context, siteId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(isConnected || isConnecting ? 0.15 : 0.08),
+          border: Border.all(color: color, width: 1.5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );
@@ -80,74 +96,71 @@ class DevicesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${l10n.devices} - $siteName'),
-        actions: [
-          if (hasMqttConfig)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: InkWell(
-                onTap: () {
-                  if (mqttStatus == TasmotaMqttStatus.connected) {
-                    _showMqttDiscoveryDialog(context, siteId);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('MQTT Status: ${mqttStatus.name}'),
-                      ),
-                    );
-                  }
-                },
-                borderRadius: BorderRadius.circular(4),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: Text(siteName),
+            actions: [
+              if (hasMqttConfig)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 8,
+                  ),
                   child: Center(
                     child: _buildMqttBadge(
+                      context,
                       mqttStatus,
                       Theme.of(context).brightness == Brightness.dark,
                     ),
                   ),
                 ),
+              IconButton(
+                icon: const Icon(Icons.radar_rounded),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => DiscoveryDialog(siteId: siteId),
+                  );
+                },
               ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.radar),
-            tooltip: l10n.scanNetwork,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => DiscoveryDialog(siteId: siteId),
+            ],
+          ),
+          devicesAsyncValue.when(
+            data: (devices) {
+              if (devices.isEmpty) {
+                return SliverFillRemaining(child: _buildEmptyState(context));
+              }
+              return SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 200,
+                    mainAxisExtent: 180,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final device = devices[index];
+                    return _buildDeviceCard(context, ref, device);
+                  }, childCount: devices.length),
+                ),
               );
             },
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stack) => SliverFillRemaining(
+              child: Center(child: Text('${l10n.error}: $error')),
+            ),
           ),
         ],
       ),
-      body: devicesAsyncValue.when(
-        data: (devices) {
-          if (devices.isEmpty) {
-            return _buildEmptyState(context);
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: devices.length,
-            itemBuilder: (context, index) {
-              final device = devices[index];
-              return _buildDeviceCard(context, ref, device);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text(
-            '${l10n.error}: $error',
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddDeviceDialog(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: Text(l10n.addDevice),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -155,103 +168,130 @@ class DevicesScreen extends ConsumerWidget {
   Widget _buildDeviceCard(BuildContext context, WidgetRef ref, Device device) {
     final liveStatusAsync = ref.watch(deviceStatusProvider(device.ipAddress));
     final liveStatus = liveStatusAsync.value;
-
     final isPowerOn =
         liveStatus?.isPowerOn ?? (device.powerState?.contains('ON') ?? false);
     final rssi = liveStatus?.rssi ?? device.rssi;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => context.go('/site/$siteId/device', extra: device),
-        onLongPress: () => _confirmDeleteDevice(context, ref, device.id!),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: CircleAvatar(
-                      backgroundColor: isPowerOn
-                          ? Colors.green.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.1),
-                      child: Icon(
-                        Icons.power_settings_new,
-                        color: isPowerOn ? Colors.green : Colors.grey,
-                      ),
-                    ),
-                    onPressed: () {
-                      ref
-                          .read(deviceControlControllerProvider)
-                          .togglePower(device.ipAddress);
-                    },
-                  ),
-                  const SizedBox(
-                    width: 4,
-                  ), // Reduced from 12 since IconButton has padding
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          device.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          '${device.ipAddress}${device.version != null ? ' • v${device.version}' : ''}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (rssi != null) _buildWifiBadge(rssi),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: isPowerOn
+              ? [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                ]
+              : [
+                  Theme.of(context).colorScheme.surface,
+                  Theme.of(context).colorScheme.surface,
                 ],
-              ),
-              if (device.uptime != null || device.module != null) ...[
-                const Divider(height: 24),
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: isPowerOn
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+          width: 1.5,
+        ),
+        boxShadow: [
+          if (isPowerOn)
+            BoxShadow(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.go('/site/$siteId/device', extra: device),
+          onLongPress: () => _confirmDeleteDevice(context, ref, device.id!),
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStatusIcon(context, isPowerOn),
+                    if (rssi != null) _buildWifiBadge(rssi),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  device.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  device.ipAddress,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      device.module ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey,
+                      isPowerOn ? 'ON' : 'OFF',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        color: isPowerOn
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.3),
                       ),
                     ),
-                    if (device.uptime != null)
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.timer_outlined,
-                            size: 12,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            device.uptime!,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: isPowerOn,
+                        onChanged: (val) {
+                          ref
+                              .read(deviceControlControllerProvider)
+                              .togglePower(device.ipAddress);
+                        },
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
                       ),
+                    ),
                   ],
                 ),
               ],
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusIcon(BuildContext context, bool isOn) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isOn
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+            : Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        isOn ? Icons.lightbulb_rounded : Icons.lightbulb_outline_rounded,
+        size: 20,
+        color: isOn ? Theme.of(context).colorScheme.primary : Colors.grey,
       ),
     );
   }

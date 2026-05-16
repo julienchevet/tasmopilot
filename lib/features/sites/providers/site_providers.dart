@@ -50,3 +50,6 @@ class SitesNotifier extends AsyncNotifier<List<Site>> {
 final sitesProvider = AsyncNotifierProvider<SitesNotifier, List<Site>>(() {
   return SitesNotifier();
 });
+
+// Provider for the currently selected site ID (null = no site selected yet)
+final selectedSiteIdProvider = StateProvider<int?>((ref) => null);

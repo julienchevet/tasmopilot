@@ -25,74 +25,152 @@ class SitesScreen extends ConsumerWidget {
     final sitesAsyncValue = ref.watch(sitesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${l10n.appTitle} - ${l10n.sites}'),
-      ),
-      body: sitesAsyncValue.when(
-        data: (sites) {
-          if (sites.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          // If only one site, go directly to it on startup
-          final hasRedirected = ref.watch(initialRedirectionProvider);
-          if (sites.length == 1 && !hasRedirected) {
-            final site = sites.first;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) {
-                ref.read(initialRedirectionProvider.notifier).setRedirected();
-                context.go('/site/${site.id}?name=${Uri.encodeComponent(site.name)}');
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: Text(l10n.sites),
+            expandedHeight: 120,
+          ),
+          sitesAsyncValue.when(
+            data: (sites) {
+              if (sites.isEmpty) {
+                return SliverFillRemaining(child: _buildEmptyState(context));
               }
-            });
-            return const Center(child: CircularProgressIndicator());
-          }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: sites.length,
-            itemBuilder: (context, index) {
-              final site = sites[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.home),
+              return SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final site = sites[index];
+                      return _buildSiteCard(context, ref, site);
+                    },
+                    childCount: sites.length,
                   ),
-                  title: Text(
-                    site.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text('Créé le ${site.createdAt.toLocal().toString().split('.')[0]}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
-                        onPressed: () => _showEditSiteDialog(context, ref, site),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                        onPressed: () => _confirmDeleteSite(context, ref, site.id!),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    context.go('/site/${site.id}?name=${Uri.encodeComponent(site.name)}');
-                  },
                 ),
               );
             },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('${l10n.error}: $error', style: const TextStyle(color: Colors.red)),
-        ),
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stack) => SliverFillRemaining(
+              child: Center(
+                child: Text('${l10n.error}: $error',
+                    style: const TextStyle(color: Colors.red)),
+              ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddSiteDialog(context, ref),
         icon: const Icon(Icons.add),
         label: Text(l10n.addSite),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  Widget _buildSiteCard(BuildContext context, WidgetRef ref, Site site) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(isDark ? 0.1 : 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          context.go('/site/${site.id}?name=${Uri.encodeComponent(site.name)}');
+        },
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.home_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      site.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Site ID: ${site.id}',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showEditSiteDialog(context, ref, site);
+                  } else if (value == 'delete') {
+                    _confirmDeleteSite(context, ref, site.id!);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(l10n.editSite),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_rounded, size: 20, color: Theme.of(context).colorScheme.error),
+                        const SizedBox(width: 12),
+                        Text(l10n.delete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
