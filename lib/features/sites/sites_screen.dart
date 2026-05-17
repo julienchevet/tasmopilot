@@ -11,10 +11,10 @@ class InitialRedirectionNotifier extends Notifier<bool> {
   void setRedirected() => state = true;
 }
 
-final initialRedirectionProvider = NotifierProvider<InitialRedirectionNotifier, bool>(
-  InitialRedirectionNotifier.new,
-);
-
+final initialRedirectionProvider =
+    NotifierProvider<InitialRedirectionNotifier, bool>(
+      InitialRedirectionNotifier.new,
+    );
 
 class SitesScreen extends ConsumerWidget {
   const SitesScreen({super.key});
@@ -27,10 +27,7 @@ class SitesScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
-            title: Text(l10n.sites),
-            expandedHeight: 120,
-          ),
+          SliverAppBar.large(title: Text(l10n.sites), expandedHeight: 120),
           sitesAsyncValue.when(
             data: (sites) {
               if (sites.isEmpty) {
@@ -40,13 +37,10 @@ class SitesScreen extends ConsumerWidget {
               return SliverPadding(
                 padding: const EdgeInsets.all(20),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final site = sites[index];
-                      return _buildSiteCard(context, ref, site);
-                    },
-                    childCount: sites.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final site = sites[index];
+                    return _buildSiteCard(context, ref, site);
+                  }, childCount: sites.length),
                 ),
               );
             },
@@ -55,8 +49,10 @@ class SitesScreen extends ConsumerWidget {
             ),
             error: (error, stack) => SliverFillRemaining(
               child: Center(
-                child: Text('${l10n.error}: $error',
-                    style: const TextStyle(color: Colors.red)),
+                child: Text(
+                  '${l10n.error}: $error',
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
             ),
           ),
@@ -81,8 +77,12 @@ class SitesScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
-            Theme.of(context).colorScheme.secondary.withOpacity(isDark ? 0.1 : 0.05),
+            Theme.of(
+              context,
+            ).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+            Theme.of(
+              context,
+            ).colorScheme.secondary.withOpacity(isDark ? 0.1 : 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -129,7 +129,9 @@ class SitesScreen extends ConsumerWidget {
                     Text(
                       'Site ID: ${site.id}',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 13,
                       ),
                     ),
@@ -160,9 +162,18 @@ class SitesScreen extends ConsumerWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_rounded, size: 20, color: Theme.of(context).colorScheme.error),
+                        Icon(
+                          Icons.delete_rounded,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                         const SizedBox(width: 12),
-                        Text(l10n.delete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                        Text(
+                          l10n.delete,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -183,10 +194,7 @@ class SitesScreen extends ConsumerWidget {
         children: [
           const Icon(Icons.home_work_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          Text(
-            l10n.noSites,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(l10n.noSites, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
             l10n.noSites, // Fallback for description or similar
@@ -231,7 +239,8 @@ class SitesScreen extends ConsumerWidget {
                     CheckboxListTile(
                       title: Text(l10n.configureMqtt),
                       value: showMqtt,
-                      onChanged: (val) => setState(() => showMqtt = val ?? false),
+                      onChanged: (val) =>
+                          setState(() => showMqtt = val ?? false),
                     ),
                     if (showMqtt) ...[
                       const Divider(),
@@ -295,11 +304,21 @@ class SitesScreen extends ConsumerWidget {
                       final newSite = Site(
                         name: name,
                         createdAt: DateTime.now(),
-                        mqttHost: showMqtt ? mqttHostController.text.trim() : null,
-                        mqttPort: showMqtt ? int.tryParse(mqttPortController.text.trim()) : null,
-                        mqttUsername: showMqtt ? mqttUserController.text.trim() : null,
-                        mqttPassword: showMqtt ? mqttPassController.text.trim() : null,
-                        mqttTopicPrefix: showMqtt ? mqttPrefixController.text.trim() : null,
+                        mqttHost: showMqtt
+                            ? mqttHostController.text.trim()
+                            : null,
+                        mqttPort: showMqtt
+                            ? int.tryParse(mqttPortController.text.trim())
+                            : null,
+                        mqttUsername: showMqtt
+                            ? mqttUserController.text.trim()
+                            : null,
+                        mqttPassword: showMqtt
+                            ? mqttPassController.text.trim()
+                            : null,
+                        mqttTopicPrefix: showMqtt
+                            ? mqttPrefixController.text.trim()
+                            : null,
                       );
                       ref.read(sitesProvider.notifier).addSite(newSite);
                       Navigator.of(context).pop();
@@ -315,7 +334,11 @@ class SitesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDeleteSite(BuildContext context, WidgetRef ref, int siteId) async {
+  Future<void> _confirmDeleteSite(
+    BuildContext context,
+    WidgetRef ref,
+    int siteId,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     return showDialog(
       context: context,
@@ -333,7 +356,9 @@ class SitesScreen extends ConsumerWidget {
                 ref.read(sitesProvider.notifier).deleteSite(siteId);
                 Navigator.of(context).pop();
               },
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: Text(l10n.delete),
             ),
           ],
@@ -342,14 +367,26 @@ class SitesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showEditSiteDialog(BuildContext context, WidgetRef ref, Site site) async {
+  Future<void> _showEditSiteDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Site site,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: site.name);
     final mqttHostController = TextEditingController(text: site.mqttHost ?? '');
-    final mqttPortController = TextEditingController(text: (site.mqttPort ?? 1883).toString());
-    final mqttUserController = TextEditingController(text: site.mqttUsername ?? '');
-    final mqttPassController = TextEditingController(text: site.mqttPassword ?? '');
-    final mqttPrefixController = TextEditingController(text: site.mqttTopicPrefix ?? 'tasmota');
+    final mqttPortController = TextEditingController(
+      text: (site.mqttPort ?? 1883).toString(),
+    );
+    final mqttUserController = TextEditingController(
+      text: site.mqttUsername ?? '',
+    );
+    final mqttPassController = TextEditingController(
+      text: site.mqttPassword ?? '',
+    );
+    final mqttPrefixController = TextEditingController(
+      text: site.mqttTopicPrefix ?? 'tasmota',
+    );
     bool showMqtt = site.mqttHost != null;
 
     return showDialog(
@@ -375,7 +412,8 @@ class SitesScreen extends ConsumerWidget {
                     CheckboxListTile(
                       title: Text(l10n.configureMqtt),
                       value: showMqtt,
-                      onChanged: (val) => setState(() => showMqtt = val ?? false),
+                      onChanged: (val) =>
+                          setState(() => showMqtt = val ?? false),
                     ),
                     if (showMqtt) ...[
                       const Divider(),
@@ -435,11 +473,21 @@ class SitesScreen extends ConsumerWidget {
                     if (newName.isNotEmpty) {
                       final updatedSite = site.copyWith(
                         name: newName,
-                        mqttHost: showMqtt ? mqttHostController.text.trim() : null,
-                        mqttPort: showMqtt ? int.tryParse(mqttPortController.text.trim()) : null,
-                        mqttUsername: showMqtt ? mqttUserController.text.trim() : null,
-                        mqttPassword: showMqtt ? mqttPassController.text.trim() : null,
-                        mqttTopicPrefix: showMqtt ? mqttPrefixController.text.trim() : null,
+                        mqttHost: showMqtt
+                            ? mqttHostController.text.trim()
+                            : null,
+                        mqttPort: showMqtt
+                            ? int.tryParse(mqttPortController.text.trim())
+                            : null,
+                        mqttUsername: showMqtt
+                            ? mqttUserController.text.trim()
+                            : null,
+                        mqttPassword: showMqtt
+                            ? mqttPassController.text.trim()
+                            : null,
+                        mqttTopicPrefix: showMqtt
+                            ? mqttPrefixController.text.trim()
+                            : null,
                       );
                       ref.read(sitesProvider.notifier).updateSite(updatedSite);
                       Navigator.of(context).pop();

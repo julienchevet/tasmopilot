@@ -52,4 +52,12 @@ final sitesProvider = AsyncNotifierProvider<SitesNotifier, List<Site>>(() {
 });
 
 // Provider for the currently selected site ID (null = no site selected yet)
-final selectedSiteIdProvider = StateProvider<int?>((ref) => null);
+class SelectedSiteIdNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void select(int? id) => state = id;
+}
+
+final selectedSiteIdProvider =
+    NotifierProvider<SelectedSiteIdNotifier, int?>(SelectedSiteIdNotifier.new);

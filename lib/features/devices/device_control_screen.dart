@@ -68,12 +68,13 @@ class DeviceControlScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(currentDevice.name),
+        title: Text(currentDevice.module ?? currentDevice.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.language_rounded),
             tooltip: 'Web UI',
-            onPressed: () => _launchWebInterface(context, currentDevice.ipAddress),
+            onPressed: () =>
+                _launchWebInterface(context, currentDevice.ipAddress),
           ),
         ],
       ),
@@ -89,13 +90,18 @@ class DeviceControlScreen extends ConsumerWidget {
           ),
         ),
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 70, 20, 20),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            MediaQuery.of(context).padding.top + 70,
+            20,
+            20,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPowerSection(context, ref, currentDevice, statusAsyncValue),
               const SizedBox(height: 32),
-              _buildSectionHeader(context, 'SYSTÈME'),
+              _buildSectionHeader(context, l10n.system),
               if (_hasSystemInfo(currentDevice))
                 _buildSystemCard(context, currentDevice),
               const SizedBox(height: 24),
@@ -152,13 +158,20 @@ class DeviceControlScreen extends ConsumerWidget {
           Card(
             child: Column(
               children: List.generate(friendlyNames.length, (index) {
-                final isOn = powerStates.length > index ? powerStates[index] == 'ON' : false;
+                final isOn = powerStates.length > index
+                    ? powerStates[index] == 'ON'
+                    : false;
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isOn ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.05),
+                      color: isOn
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -173,7 +186,9 @@ class DeviceControlScreen extends ConsumerWidget {
                   trailing: Switch(
                     value: isOn,
                     onChanged: (value) {
-                      ref.read(deviceControlControllerProvider).togglePower(device.ipAddress, relayIndex: index + 1);
+                      ref
+                          .read(deviceControlControllerProvider)
+                          .togglePower(device.ipAddress, relayIndex: index + 1);
                     },
                   ),
                 );
@@ -189,18 +204,24 @@ class DeviceControlScreen extends ConsumerWidget {
         children: [
           const SizedBox(height: 10),
           statusAsyncValue.when(
-            data: (status) => _buildPowerButton(context, ref, device, status.isPowerOn),
+            data: (status) =>
+                _buildPowerButton(context, ref, device, status.isPowerOn),
             loading: () => const CircularProgressIndicator(),
-            error: (error, stack) => _buildErrorState(context, ref, device, error),
+            error: (error, stack) =>
+                _buildErrorState(context, ref, device, error),
           ),
           const SizedBox(height: 24),
           if (statusAsyncValue.hasValue)
             Text(
-              statusAsyncValue.value?.isPowerOn == true ? l10n.powerOn : l10n.powerOff,
+              statusAsyncValue.value?.isPowerOn == true
+                  ? l10n.powerOn
+                  : l10n.powerOff,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
-                color: statusAsyncValue.value?.isPowerOn == true ? Colors.green : Colors.grey,
+                color: statusAsyncValue.value?.isPowerOn == true
+                    ? Colors.green
+                    : Colors.grey,
               ),
             ),
         ],
@@ -214,17 +235,35 @@ class DeviceControlScreen extends ConsumerWidget {
       child: Column(
         children: [
           if (device.module != null)
-            _buildControlTile(Icons.memory_rounded, l10n.module, device.module!),
+            _buildControlTile(
+              Icons.memory_rounded,
+              l10n.module,
+              device.module!,
+            ),
           if (device.version != null)
-            _buildControlTile(Icons.info_outline_rounded, l10n.version, device.version!, color: Colors.blue),
+            _buildControlTile(
+              Icons.info_outline_rounded,
+              l10n.version,
+              device.version!,
+              color: Colors.blue,
+            ),
           if (device.uptime != null)
-            _buildControlTile(Icons.timer_outlined, l10n.uptime, device.uptime!),
+            _buildControlTile(
+              Icons.timer_outlined,
+              l10n.uptime,
+              device.uptime!,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildControlTile(IconData icon, String title, String trailing, {Color? color}) {
+  Widget _buildControlTile(
+    IconData icon,
+    String title,
+    String trailing, {
+    Color? color,
+  }) {
     return ListTile(
       leading: Icon(icon, size: 22),
       title: Text(title, style: const TextStyle(fontSize: 14)),
@@ -253,9 +292,17 @@ class DeviceControlScreen extends ConsumerWidget {
     return Card(
       child: Column(
         children: [
-          _buildControlTile(Icons.settings_ethernet_rounded, l10n.ipAddress, device.ipAddress),
+          _buildControlTile(
+            Icons.settings_ethernet_rounded,
+            l10n.ipAddress,
+            device.ipAddress,
+          ),
           if (device.macAddress != null)
-            _buildControlTile(Icons.fingerprint_rounded, l10n.macAddress, device.macAddress!),
+            _buildControlTile(
+              Icons.fingerprint_rounded,
+              l10n.macAddress,
+              device.macAddress!,
+            ),
           if (ssid != null) ...[
             const Divider(height: 1, indent: 56),
             ListTile(
@@ -263,10 +310,16 @@ class DeviceControlScreen extends ConsumerWidget {
               title: Text(l10n.wifiSsid, style: const TextStyle(fontSize: 14)),
               trailing: Text(
                 ssid,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               subtitle: wifi['Channel'] != null
-                  ? Text('${l10n.channel}: ${wifi['Channel']}', style: const TextStyle(fontSize: 12))
+                  ? Text(
+                      '${l10n.channel}: ${wifi['Channel']}',
+                      style: const TextStyle(fontSize: 12),
+                    )
                   : null,
             ),
           ],
@@ -274,13 +327,26 @@ class DeviceControlScreen extends ConsumerWidget {
             const Divider(height: 1, indent: 56),
             ListTile(
               leading: _buildWifiIcon(rssi),
-              title: Text(l10n.wifiSignal, style: const TextStyle(fontSize: 14)),
-              trailing: Text('$rssi%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              title: Text(
+                l10n.wifiSignal,
+                style: const TextStyle(fontSize: 14),
+              ),
+              trailing: Text(
+                '$rssi%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ],
           if (device.topic != null) ...[
             const Divider(height: 1, indent: 56),
-            _buildControlTile(Icons.label_outline_rounded, l10n.mqttTopic, device.topic!),
+            _buildControlTile(
+              Icons.label_outline_rounded,
+              l10n.mqttTopic,
+              device.topic!,
+            ),
           ],
         ],
       ),
@@ -288,8 +354,15 @@ class DeviceControlScreen extends ConsumerWidget {
   }
 
   Widget _buildWifiIcon(int rssi) {
-    if (rssi > 75) return const Icon(Icons.wifi_rounded, color: Colors.green, size: 22);
-    if (rssi > 50) return const Icon(Icons.wifi_2_bar_rounded, color: Colors.orange, size: 22);
+    if (rssi > 75)
+      return const Icon(Icons.wifi_rounded, color: Colors.green, size: 22);
+    if (rssi > 50) {
+      return const Icon(
+        Icons.wifi_2_bar_rounded,
+        color: Colors.orange,
+        size: 22,
+      );
+    }
     return const Icon(Icons.wifi_1_bar_rounded, color: Colors.red, size: 22);
   }
 
@@ -302,11 +375,16 @@ class DeviceControlScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () {
-        ref.read(deviceControlControllerProvider).togglePower(device.ipAddress).catchError((e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorDeviceUnreachable)));
-          }
-        });
+        ref
+            .read(deviceControlControllerProvider)
+            .togglePower(device.ipAddress)
+            .catchError((e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.errorDeviceUnreachable)),
+                );
+              }
+            });
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
@@ -316,8 +394,8 @@ class DeviceControlScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: isOn 
-                ? [Colors.green.shade400, Colors.green.shade700] 
+            colors: isOn
+                ? [Colors.green.shade400, Colors.green.shade700]
                 : [Colors.grey.shade700, Colors.grey.shade900],
           ),
           boxShadow: [
@@ -334,10 +412,7 @@ class DeviceControlScreen extends ConsumerWidget {
                 spreadRadius: -10,
               ),
           ],
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 2),
         ),
         child: Icon(
           Icons.power_settings_new_rounded,
@@ -351,9 +426,12 @@ class DeviceControlScreen extends ConsumerWidget {
   Widget _buildRawDataSection(BuildContext context, DeviceLiveStatus status) {
     final l10n = AppLocalizations.of(context)!;
     return Card(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withOpacity(0.1),
       child: ExpansionTile(
-        title: Text(l10n.rawData, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        title: Text(
+          l10n.rawData,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
         leading: const Icon(Icons.code_rounded),
         children: [
           Container(
@@ -364,7 +442,7 @@ class DeviceControlScreen extends ConsumerWidget {
               style: const TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 11,
-                color: Colors.greenAccent,
+                color: Colors.black,
               ),
             ),
           ),
@@ -390,13 +468,21 @@ class DeviceControlScreen extends ConsumerWidget {
               color: Colors.red.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.red),
+            child: const Icon(
+              Icons.cloud_off_rounded,
+              size: 48,
+              color: Colors.red,
+            ),
           ),
           const SizedBox(height: 24),
-          Text(l10n.deviceUnreachable, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            l10n.deviceUnreachable,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           FilledButton.tonal(
-            onPressed: () => ref.invalidate(deviceStatusProvider(device.ipAddress)),
+            onPressed: () =>
+                ref.invalidate(deviceStatusProvider(device.ipAddress)),
             child: Text(l10n.retry),
           ),
         ],

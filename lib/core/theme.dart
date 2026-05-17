@@ -6,7 +6,7 @@ class AppTheme {
   static const Color tasmotaBlue = Color(0xFF1FA3EC);
   static const Color tasmotaDarkBlue = Color(0xFF0E70A4);
   static const Color accentTeal = Color(0xFF00E5FF);
-  
+
   // Dark Theme (Modern)
   static const Color tasmotaTextDark = Color(0xFFF5F5F5);
   static const Color tasmotaBgDark = Color(0xFF0F172A); // Deep Slate
@@ -34,10 +34,9 @@ class AppTheme {
         brightness: Brightness.light,
       ),
       scaffoldBackgroundColor: tasmotaBgLight,
-      textTheme: GoogleFonts.outfitTextTheme(base.textTheme).apply(
-        bodyColor: tasmotaTextLight,
-        displayColor: tasmotaTextLight,
-      ),
+      textTheme: GoogleFonts.outfitTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: tasmotaTextLight, displayColor: tasmotaTextLight),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: tasmotaTextLight,
@@ -57,19 +56,25 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: tasmotaBlue,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
           elevation: 2,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
         elevation: 8,
       ),
     );
@@ -88,10 +93,9 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: tasmotaBgDark,
-      textTheme: GoogleFonts.outfitTextTheme(base.textTheme).apply(
-        bodyColor: tasmotaTextDark,
-        displayColor: Colors.white,
-      ),
+      textTheme: GoogleFonts.outfitTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: tasmotaTextDark, displayColor: Colors.white),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: tasmotaTextDark,
@@ -111,20 +115,26 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: tasmotaButtonDark,
           foregroundColor: tasmotaTextDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: tasmotaContainerDark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
         elevation: 24,
       ),
     );
@@ -133,13 +143,13 @@ class AppTheme {
   static BoxDecoration glassDecoration(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return BoxDecoration(
-      color: isDark 
-          ? Colors.white.withOpacity(0.05) 
+      color: isDark
+          ? Colors.white.withOpacity(0.05)
           : Colors.white.withOpacity(0.7),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: isDark 
-            ? Colors.white.withOpacity(0.1) 
+        color: isDark
+            ? Colors.white.withOpacity(0.1)
             : Colors.white.withOpacity(0.2),
       ),
     );
