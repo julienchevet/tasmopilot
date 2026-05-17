@@ -55,6 +55,7 @@ class DeviceControlScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final currentDevice =
         ref.watch(
           deviceProvider((siteId: device.siteId, deviceId: device.id!)),
@@ -65,49 +66,68 @@ class DeviceControlScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(currentDevice.name),
+        title: Text(currentDevice.module ?? currentDevice.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.language),
-            tooltip: 'Ouvrir l\'interface Web',
+            icon: const Icon(Icons.language_rounded),
+            tooltip: 'Web UI',
             onPressed: () =>
                 _launchWebInterface(context, currentDevice.ipAddress),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Power Controls Section ---
-            _buildPowerSection(context, ref, currentDevice, statusAsyncValue),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.surface.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            MediaQuery.of(context).padding.top + 70,
+            20,
+            20,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPowerSection(context, ref, currentDevice, statusAsyncValue),
+              const SizedBox(height: 32),
+              _buildSectionHeader(context, l10n.system),
+              if (_hasSystemInfo(currentDevice))
+                _buildSystemCard(context, currentDevice),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, l10n.network),
+              _buildNetworkCard(context, currentDevice, statusAsyncValue),
+              const SizedBox(height: 24),
+              if (statusAsyncValue.hasValue)
+                _buildRawDataSection(context, statusAsyncValue.value!),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            const SizedBox(height: 24),
-
-            // --- Live Info (WiFi / MQTT) ---
-            _buildLiveDetails(context, statusAsyncValue.value),
-
-            const SizedBox(height: 16),
-
-            // --- System Information Card ---
-            if (_hasSystemInfo(currentDevice))
-              _buildSystemCard(context, currentDevice),
-
-            const SizedBox(height: 16),
-
-            // --- Network Information Card ---
-            _buildNetworkCard(context, currentDevice, statusAsyncValue),
-
-            const SizedBox(height: 16),
-
-            // --- Raw Data Expansion ---
-            if (statusAsyncValue.hasValue)
-              _buildRawDataSection(context, statusAsyncValue.value!),
-
-            const SizedBox(height: 32),
-          ],
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 12),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
         ),
       ),
     );
@@ -123,7 +143,6 @@ class DeviceControlScreen extends ConsumerWidget {
     AsyncValue<DeviceLiveStatus> statusAsyncValue,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    // If we have multiple relays (friendlyNames), we show a list
     final List<String> friendlyNames = [
       if (device.friendlyName1 != null) device.friendlyName1!,
       if (device.friendlyName2 != null) device.friendlyName2!,
@@ -135,15 +154,7 @@ class DeviceControlScreen extends ConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'CONTRÔLES',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: Colors.grey),
-            ),
-          ),
+          _buildSectionHeader(context, 'CONTRÔLES'),
           Card(
             child: Column(
               children: List.generate(friendlyNames.length, (index) {
@@ -151,15 +162,30 @@ class DeviceControlScreen extends ConsumerWidget {
                     ? powerStates[index] == 'ON'
                     : false;
                 return ListTile(
-                  leading: Icon(
-                    Icons.power_settings_new,
-                    color: isOn ? Colors.green : Colors.grey,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
                   ),
-                  title: Text(friendlyNames[index]),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isOn
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.power_settings_new_rounded,
+                      color: isOn ? Colors.green : Colors.grey,
+                    ),
+                  ),
+                  title: Text(
+                    friendlyNames[index],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   trailing: Switch(
                     value: isOn,
                     onChanged: (value) {
-                      // We need to implement toggle for specific relay
                       ref
                           .read(deviceControlControllerProvider)
                           .togglePower(device.ipAddress, relayIndex: index + 1);
@@ -173,11 +199,10 @@ class DeviceControlScreen extends ConsumerWidget {
       );
     }
 
-    // Default single relay big button
     return Center(
       child: Column(
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           statusAsyncValue.when(
             data: (status) =>
                 _buildPowerButton(context, ref, device, status.isPowerOn),
@@ -185,14 +210,15 @@ class DeviceControlScreen extends ConsumerWidget {
             error: (error, stack) =>
                 _buildErrorState(context, ref, device, error),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           if (statusAsyncValue.hasValue)
             Text(
               statusAsyncValue.value?.isPowerOn == true
                   ? l10n.powerOn
                   : l10n.powerOff,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
                 color: statusAsyncValue.value?.isPowerOn == true
                     ? Colors.green
                     : Colors.grey,
@@ -205,49 +231,50 @@ class DeviceControlScreen extends ConsumerWidget {
 
   Widget _buildSystemCard(BuildContext context, Device device) {
     final l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            'SYSTÈME',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Colors.grey),
-          ),
+    return Card(
+      child: Column(
+        children: [
+          if (device.module != null)
+            _buildControlTile(
+              Icons.memory_rounded,
+              l10n.module,
+              device.module!,
+            ),
+          if (device.version != null)
+            _buildControlTile(
+              Icons.info_outline_rounded,
+              l10n.version,
+              device.version!,
+              color: Colors.blue,
+            ),
+          if (device.uptime != null)
+            _buildControlTile(
+              Icons.timer_outlined,
+              l10n.uptime,
+              device.uptime!,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlTile(
+    IconData icon,
+    String title,
+    String trailing, {
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Icon(icon, size: 22),
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      trailing: Text(
+        trailing,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: color,
+          fontSize: 14,
         ),
-        Card(
-          child: Column(
-            children: [
-              if (device.module != null)
-                ListTile(
-                  leading: const Icon(Icons.memory),
-                  title: Text(l10n.module),
-                  trailing: Text(
-                    device.module!,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (device.version != null)
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(l10n.version),
-                  trailing: Text(
-                    device.version!,
-                    style: const TextStyle(color: Colors.blue),
-                  ),
-                ),
-              if (device.uptime != null)
-                ListTile(
-                  leading: const Icon(Icons.timer_outlined),
-                  title: Text(l10n.uptime),
-                  trailing: Text(device.uptime!),
-                ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -259,56 +286,84 @@ class DeviceControlScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final liveRssi = statusAsyncValue.value?.rssi;
     final rssi = liveRssi ?? device.rssi;
+    final wifi = statusAsyncValue.value?.rawData['StatusSTS']?['Wifi'];
+    final ssid = wifi?['SSID'] as String?;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            l10n.network.toUpperCase(),
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Colors.grey),
+    return Card(
+      child: Column(
+        children: [
+          _buildControlTile(
+            Icons.settings_ethernet_rounded,
+            l10n.ipAddress,
+            device.ipAddress,
           ),
-        ),
-        Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.settings_ethernet),
-                title: Text(l10n.ipAddress),
-                trailing: Text(device.ipAddress),
+          if (device.macAddress != null)
+            _buildControlTile(
+              Icons.fingerprint_rounded,
+              l10n.macAddress,
+              device.macAddress!,
+            ),
+          if (ssid != null) ...[
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: const Icon(Icons.wifi_tethering_rounded, size: 22),
+              title: Text(l10n.wifiSsid, style: const TextStyle(fontSize: 14)),
+              trailing: Text(
+                ssid,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-              if (device.macAddress != null)
-                ListTile(
-                  leading: const Icon(Icons.fingerprint),
-                  title: Text(l10n.macAddress),
-                  trailing: Text(device.macAddress!),
+              subtitle: wifi['Channel'] != null
+                  ? Text(
+                      '${l10n.channel}: ${wifi['Channel']}',
+                      style: const TextStyle(fontSize: 12),
+                    )
+                  : null,
+            ),
+          ],
+          if (rssi != null) ...[
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: _buildWifiIcon(rssi),
+              title: Text(
+                l10n.wifiSignal,
+                style: const TextStyle(fontSize: 14),
+              ),
+              trailing: Text(
+                '$rssi%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              if (device.topic != null)
-                ListTile(
-                  leading: const Icon(Icons.label_outline),
-                  title: Text(l10n.mqttTopic),
-                  trailing: Text(device.topic!),
-                ),
-              if (rssi != null)
-                ListTile(
-                  leading: _buildWifiIcon(rssi),
-                  title: Text(l10n.wifiSignal),
-                  trailing: Text('$rssi%'),
-                ),
-            ],
-          ),
-        ),
-      ],
+              ),
+            ),
+          ],
+          if (device.topic != null) ...[
+            const Divider(height: 1, indent: 56),
+            _buildControlTile(
+              Icons.label_outline_rounded,
+              l10n.mqttTopic,
+              device.topic!,
+            ),
+          ],
+        ],
+      ),
     );
   }
 
   Widget _buildWifiIcon(int rssi) {
-    if (rssi > 75) return const Icon(Icons.wifi, color: Colors.green);
-    if (rssi > 50) return const Icon(Icons.wifi_2_bar, color: Colors.orange);
-    return const Icon(Icons.wifi_1_bar, color: Colors.red);
+    if (rssi > 75)
+      return const Icon(Icons.wifi_rounded, color: Colors.green, size: 22);
+    if (rssi > 50) {
+      return const Icon(
+        Icons.wifi_2_bar_rounded,
+        color: Colors.orange,
+        size: 22,
+      );
+    }
+    return const Icon(Icons.wifi_1_bar_rounded, color: Colors.red, size: 22);
   }
 
   Widget _buildPowerButton(
@@ -332,110 +387,67 @@ class DeviceControlScreen extends ConsumerWidget {
             });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 120,
-        height: 120,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.elasticOut,
+        width: 160,
+        height: 160,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isOn ? Colors.green : Colors.grey[800],
+          gradient: RadialGradient(
+            colors: isOn
+                ? [Colors.green.shade400, Colors.green.shade700]
+                : [Colors.grey.shade700, Colors.grey.shade900],
+          ),
           boxShadow: [
             BoxShadow(
-              color: (isOn ? Colors.green : Colors.black).withAlpha(128),
-              blurRadius: 20,
-              spreadRadius: 2,
+              color: (isOn ? Colors.green : Colors.black).withOpacity(0.3),
+              blurRadius: 30,
+              spreadRadius: 5,
+              offset: const Offset(0, 10),
             ),
+            if (isOn)
+              BoxShadow(
+                color: Colors.green.withOpacity(0.5),
+                blurRadius: 50,
+                spreadRadius: -10,
+              ),
           ],
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 2),
         ),
-        child: const Icon(
-          Icons.power_settings_new,
-          size: 60,
-          color: Colors.white,
+        child: Icon(
+          Icons.power_settings_new_rounded,
+          size: 80,
+          color: isOn ? Colors.white : Colors.white24,
         ),
       ),
     );
   }
 
-  Widget _buildLiveDetails(BuildContext context, DeviceLiveStatus? status) {
-    final l10n = AppLocalizations.of(context)!;
-    final wifi = status?.rawData['StatusSTS']?['Wifi'];
-    final mqtt = status?.rawData['StatusMQT'];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            l10n.liveDetails,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Colors.grey),
-          ),
-        ),
-        Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.wifi_tethering),
-                title: Text(l10n.wifiSsid),
-                trailing: Text(
-                  wifi?['SSID'] ?? l10n.loading,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: wifi?['SSID'] == null ? Colors.grey : null,
-                  ),
-                ),
-                subtitle: wifi != null
-                    ? Text(
-                        '${l10n.channel}: ${wifi['Channel']} • BSSID: ${wifi['BSSId']}',
-                      )
-                    : Text(l10n.searchingSignal),
-              ),
-              const Divider(height: 1, indent: 56),
-              ListTile(
-                leading: const Icon(Icons.cloud_queue),
-                title: Text(l10n.mqttBroker),
-                trailing: Text(
-                  mqtt?['Host'] ?? l10n.loading,
-                  style: TextStyle(
-                    color: mqtt?['Host'] == null ? Colors.grey : Colors.blue,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: mqtt != null
-                    ? Text('${l10n.client}: ${mqtt['Id']}')
-                    : Text(l10n.verifyingConnection),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildRawDataSection(BuildContext context, DeviceLiveStatus status) {
     final l10n = AppLocalizations.of(context)!;
-    return ExpansionTile(
-      title: Text(l10n.rawData),
-      leading: const Icon(Icons.code),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[900],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: SelectableText(
-            JsonEncoder.withIndent('  ').convert(status.rawData),
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 12,
-              color: Colors.greenAccent,
+    return Card(
+      color: Colors.black.withOpacity(0.1),
+      child: ExpansionTile(
+        title: Text(
+          l10n.rawData,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        leading: const Icon(Icons.code_rounded),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            child: SelectableText(
+              JsonEncoder.withIndent('  ').convert(status.rawData),
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: Colors.black,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -450,17 +462,25 @@ class DeviceControlScreen extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-          const SizedBox(height: 16),
-          Text(l10n.deviceUnreachable),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.cloud_off_rounded,
+              size: 48,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 24),
           Text(
-            error.toString(),
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-            textAlign: TextAlign.center,
+            l10n.deviceUnreachable,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          FilledButton.tonal(
             onPressed: () =>
                 ref.invalidate(deviceStatusProvider(device.ipAddress)),
             child: Text(l10n.retry),

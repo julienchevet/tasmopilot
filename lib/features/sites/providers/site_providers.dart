@@ -50,3 +50,14 @@ class SitesNotifier extends AsyncNotifier<List<Site>> {
 final sitesProvider = AsyncNotifierProvider<SitesNotifier, List<Site>>(() {
   return SitesNotifier();
 });
+
+// Provider for the currently selected site ID (null = no site selected yet)
+class SelectedSiteIdNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void select(int? id) => state = id;
+}
+
+final selectedSiteIdProvider =
+    NotifierProvider<SelectedSiteIdNotifier, int?>(SelectedSiteIdNotifier.new);

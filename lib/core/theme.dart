@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Exact Tasmota colors from documentation
+  // Exact Tasmota colors but enhanced
   static const Color tasmotaBlue = Color(0xFF1FA3EC);
   static const Color tasmotaDarkBlue = Color(0xFF0E70A4);
-  
-  // Dark Theme (Default)
-  static const Color tasmotaTextDark = Color(0xFFEAEAEA);
-  static const Color tasmotaBgDark = Color(0xFF252525);
-  static const Color tasmotaContainerDark = Color(0xFF1F1F1F);
-  static const Color tasmotaButtonDark = Color(0xFF4F4F4F);
-  static const Color tasmotaBlack = Color(0xFF000000);
+  static const Color accentTeal = Color(0xFF00E5FF);
+
+  // Dark Theme (Modern)
+  static const Color tasmotaTextDark = Color(0xFFF5F5F5);
+  static const Color tasmotaBgDark = Color(0xFF0F172A); // Deep Slate
+  static const Color tasmotaContainerDark = Color(0xFF1E293B);
+  static const Color tasmotaButtonDark = Color(0xFF334155);
+  static const Color tasmotaBlack = Color(0xFF020617);
 
   // Light Theme
-  static const Color tasmotaTextLight = Color(0xFF000000);
-  static const Color tasmotaBgLight = Color(0xFFFFFFFF);
-  static const Color tasmotaContainerLight = Color(0xFFF2F2F2);
+  static const Color tasmotaTextLight = Color(0xFF1E293B);
+  static const Color tasmotaBgLight = Color(0xFFF8FAFC);
+  static const Color tasmotaContainerLight = Color(0xFFFFFFFF);
+
+  static const double borderRadius = 24.0;
 
   static ThemeData get lightTheme {
     final base = ThemeData.light();
@@ -26,36 +29,53 @@ class AppTheme {
         seedColor: tasmotaBlue,
         primary: tasmotaBlue,
         onPrimary: Colors.white,
-        secondary: tasmotaDarkBlue,
+        secondary: accentTeal,
         surface: tasmotaBgLight,
-        // background is deprecated
         brightness: Brightness.light,
       ),
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
-        bodyColor: tasmotaTextLight,
-        displayColor: tasmotaTextLight,
-      ),
+      scaffoldBackgroundColor: tasmotaBgLight,
+      textTheme: GoogleFonts.outfitTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: tasmotaTextLight, displayColor: tasmotaTextLight),
       appBarTheme: const AppBarTheme(
-        backgroundColor: tasmotaBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        foregroundColor: tasmotaTextLight,
         centerTitle: true,
-        elevation: 2,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: tasmotaBgLight,
+        color: tasmotaContainerLight,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-          side: BorderSide(color: Colors.grey.shade300, width: 1),
+          borderRadius: BorderRadius.circular(borderRadius),
+          side: BorderSide(color: Colors.blue.withOpacity(0.05), width: 1),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: tasmotaBlue,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        elevation: 8,
       ),
     );
   }
@@ -68,38 +88,70 @@ class AppTheme {
         seedColor: tasmotaBlue,
         primary: tasmotaBlue,
         onPrimary: Colors.white,
-        secondary: tasmotaDarkBlue,
+        secondary: accentTeal,
         surface: tasmotaBgDark,
         brightness: Brightness.dark,
       ),
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
-        bodyColor: tasmotaTextDark,
-        displayColor: Colors.white,
-      ),
+      scaffoldBackgroundColor: tasmotaBgDark,
+      textTheme: GoogleFonts.outfitTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: tasmotaTextDark, displayColor: Colors.white),
       appBarTheme: const AppBarTheme(
-        backgroundColor: tasmotaBlack, // Tasmota dark header is often black
+        backgroundColor: Colors.transparent,
         foregroundColor: tasmotaTextDark,
         centerTitle: true,
         elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: tasmotaBgDark,
+        color: tasmotaContainerDark.withOpacity(0.6),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-          side: const BorderSide(color: Color(0xFF333333), width: 1),
+          borderRadius: BorderRadius.circular(borderRadius),
+          side: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: tasmotaButtonDark,
           foregroundColor: tasmotaTextDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
-      // For active/primary buttons, use a specific style if needed, 
-      // but Material 3 uses colorScheme.primary for FilledButton etc.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: tasmotaContainerDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        elevation: 24,
+      ),
+    );
+  }
+
+  static BoxDecoration glassDecoration(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BoxDecoration(
+      color: isDark
+          ? Colors.white.withOpacity(0.05)
+          : Colors.white.withOpacity(0.7),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: isDark
+            ? Colors.white.withOpacity(0.1)
+            : Colors.white.withOpacity(0.2),
+      ),
     );
   }
 }
